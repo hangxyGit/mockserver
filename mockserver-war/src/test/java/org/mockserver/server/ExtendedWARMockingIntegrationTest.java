@@ -53,7 +53,7 @@ public class ExtendedWARMockingIntegrationTest extends AbstractExtendedDeployabl
         Connector defaultConnector = tomcat.getConnector();
         defaultConnector.setRedirectPort(SERVER_HTTPS_PORT);
 
-        // add servlet
+        // add flow
         Context ctx = tomcat.addContext("/" + servletContext, new File(".").getAbsolutePath());
         tomcat.addServlet("/" + servletContext, "mockServerServlet", new MockServerServlet());
         ctx.addServletMappingDecoded("/*", "mockServerServlet");

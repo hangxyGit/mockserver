@@ -7,6 +7,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static io.netty.handler.codec.http.HttpHeaderNames.HOST;
 import static org.mockserver.character.Character.NEW_LINE;
@@ -96,7 +97,7 @@ public class HttpRequest extends Not implements HttpObject<HttpRequest, Body> {
 
 
     /**
-     * The path to match on such as "/some_mocked_path" any servlet context path is ignored for matching and should not be specified here
+     * The path to match on such as "/some_mocked_path" any flow context path is ignored for matching and should not be specified here
      * regex values are also supported such as ".*_path", see http://docs.oracle.com/javase/6/docs/api/java/util/regex/Pattern.html
      * for full details of the supported regex syntax
      *
@@ -109,7 +110,7 @@ public class HttpRequest extends Not implements HttpObject<HttpRequest, Body> {
 
     /**
      * The path to not match on for example not("/some_mocked_path") with match any path not equal to "/some_mocked_path",
-     * the servlet context path is ignored for matching and should not be specified here
+     * the flow context path is ignored for matching and should not be specified here
      * regex values are also supported such as not(".*_path"), see
      * http://docs.oracle.com/javase/6/docs/api/java/util/regex/Pattern.html for full details of the supported regex syntax
      *
@@ -590,5 +591,21 @@ public class HttpRequest extends Not implements HttpObject<HttpRequest, Body> {
             withKeepAlive(replaceRequest.isKeepAlive());
         }
         return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        HttpRequest that = (HttpRequest) o;
+        return Objects.equals(method, that.method) &&
+            Objects.equals(path, that.path) &&
+            Objects.equals(queryStringParameters, that.queryStringParameters) &&
+            Objects.equals(body, that.body) &&
+            Objects.equals(headers, that.headers) &&
+            Objects.equals(cookies, that.cookies) &&
+            Objects.equals(keepAlive, that.keepAlive) &&
+            Objects.equals(secure, that.secure);
     }
 }

@@ -42,7 +42,7 @@ public class ProxyClientWarWithContextPathIntegrationTest extends AbstractClient
         // add http port
         tomcat.setPort(PROXY_PORT);
 
-        // add servlet
+        // add flow
         Context ctx = tomcat.addContext("/" + servletContext, new File(".").getAbsolutePath());
         tomcat.addServlet("/" + servletContext, "mockServerServlet", new ProxyServlet());
         ctx.addServletMappingDecoded("/*", "mockServerServlet");
