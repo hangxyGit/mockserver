@@ -39,6 +39,7 @@ public class FlowActionHandler extends ActionHandler {
         if (expectation != null && expectation instanceof FlowExpectation) {
             // 前置处理
             FlowExpectation flowExpectation = (FlowExpectation) expectation;
+            flowHttpRequest.setFlowExpectation(flowExpectation);
             Map<String, ScriptConfigModel> scriptConfigsMap = flowExpectation.getPreProcess();
             if (MapUtils.isNotEmpty(scriptConfigsMap)) {
                 List<ScriptConfigModel> scriptConfigModelList = scriptConfigsMap.values().stream().sorted(Comparator.comparing(ScriptConfigModel::getScriptIndex)).collect(Collectors.toList());

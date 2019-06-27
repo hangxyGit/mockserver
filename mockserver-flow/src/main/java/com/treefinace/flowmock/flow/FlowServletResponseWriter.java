@@ -30,8 +30,10 @@ public class FlowServletResponseWriter extends ServletResponseWriter {
             FlowExpectation flowExpectation = flowHttpRequest.getFlowExpectation();
             if (flowExpectation != null && flowExpectation.getPostProcess() != null) {
                 Map<String, ScriptConfigModel> scriptConfigsMap = flowExpectation.getPostProcess();
-                List<ScriptConfigModel> scriptConfigModelList = scriptConfigsMap.values().stream().sorted(Comparator.comparing(ScriptConfigModel::getScriptIndex)).collect(Collectors.toList());
-                scriptConfigModelList.stream().forEach(scriptConfigModel -> scriptProcessorManager.process(scriptConfigModel, flowHttpRequest));
+                if (scriptConfigsMap != null) {
+                    List<ScriptConfigModel> scriptConfigModelList = scriptConfigsMap.values().stream().sorted(Comparator.comparing(ScriptConfigModel::getScriptIndex)).collect(Collectors.toList());
+                    scriptConfigModelList.stream().forEach(scriptConfigModel -> scriptProcessorManager.process(scriptConfigModel, flowHttpRequest));
+                }
             }
         }
         super.writeResponse(request, response, apiResponse);
