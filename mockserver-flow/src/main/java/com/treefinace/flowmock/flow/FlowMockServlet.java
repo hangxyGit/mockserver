@@ -2,6 +2,7 @@ package com.treefinace.flowmock.flow;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.net.MediaType;
+import com.treefinace.flowmock.flow.model.FlowHttpRequest;
 import com.treefinace.flowmock.flow.script.ScriptProcessorManager;
 import com.treefinace.flowmock.service.ProjectService;
 import io.netty.channel.EventLoopGroup;
@@ -17,14 +18,17 @@ import org.mockserver.serialization.PortBindingSerializer;
 import org.mockserver.socket.tls.KeyAndCertificateFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.DispatcherServlet;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
-import javax.servlet.http.HttpServlet;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 import static io.netty.handler.codec.http.HttpHeaderNames.HOST;
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
@@ -32,26 +36,28 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mockserver.model.HttpResponse.response;
 
 @Component
-public class FlowMockServlet extends HttpServlet implements ServletContextListener, InitializingBean {
+public class FlowMockServlet extends DispatcherServlet implements ServletContextListener, InitializingBean {
 
     private MockServerLogger mockServerLogger;
     // generic handling
     private FlowHttpStateHandler httpStateHandler;
-    private Scheduler scheduler = new Scheduler();
     // serializers
     private PortBindingSerializer portBindingSerializer;
     // mappers
-    private HttpServletRequestToMockServerRequestDecoder httpServletRequestToMockServerRequestDecoder = new HttpServletRequestToMockServerRequestDecoder();
+    private HttpServletRequestToMockServerRequestDecoder requestDecoder = new HttpServletRequestToMockServerRequestDecoder();
     // mockserver
     private ActionHandler actionHandler;
 
     private EventLoopGroup workerGroup = new NioEventLoopGroup(ConfigurationProperties.nioEventLoopThreadCount());
 
-
+    @Autowired
+    private Scheduler scheduler;
     @Autowired
     private ProjectService projectService;
     @Autowired
     private ScriptProcessorManager scriptProcessorManager;
+    @Value("${server.port}")
+    private int serverPort;
 
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
@@ -60,21 +66,28 @@ public class FlowMockServlet extends HttpServlet implements ServletContextListen
     }
 
     @Override
-    public void service(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
+    public void service(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws ServletException, IOException {
+
         ResponseWriter responseWriter = new FlowServletResponseWriter(scriptProcessorManager, httpServletResponse);
         FlowHttpRequest request = null;
         try {
-            request = new FlowHttpRequest(httpServletRequestToMockServerRequestDecoder.mapHttpServletRequestToMockServerRequest(httpServletRequest));
-            // 系统预留的路径
-            if (request.getPrimaryPath().startsWith("/mockconfig")) {
-                super.service(httpServletRequest, httpServletResponse);
+
+            // 接受mock 配置的后台端口，转至Controller处理
+            if (httpServletRequest.getServerPort() == serverPort) {
+                if (httpServletRequest.getPathInfo().startsWith(HttpStateHandler.PATH_PREFIX)) {
+                    request = new FlowHttpRequest(requestDecoder.mapHttpServletRequestToMockServerRequest(httpServletRequest));
+                    httpStateHandler.handle(request, responseWriter, false);
+                } else {
+                    super.service(httpServletRequest, httpServletResponse);
+                }
                 return;
             }
+
+            request = new FlowHttpRequest(requestDecoder.mapHttpServletRequestToMockServerRequest(httpServletRequest));
             // 项目信息
             String project = request.getPrimaryPath().replaceAll("/", "");
             // 获取redis 配置
             request.setProject(projectService.getProject(project));
-
 
             final String hostHeader = request.getFirstHeader(HOST.toString());
             scheduler.submit(new Runnable() {
@@ -84,17 +97,15 @@ public class FlowMockServlet extends HttpServlet implements ServletContextListen
                 }
             });
 
-            if (!httpStateHandler.handle(request, responseWriter, false)) {
-                String portExtension = "";
-                if (!(httpServletRequest.getLocalPort() == 443 && httpServletRequest.isSecure() || httpServletRequest.getLocalPort() == 80)) {
-                    portExtension = ":" + httpServletRequest.getLocalPort();
-                }
-                actionHandler.processAction(request, responseWriter, null, ImmutableSet.of(
-                    httpServletRequest.getLocalAddr() + portExtension,
-                    "localhost" + portExtension,
-                    "127.0.0.1" + portExtension
-                ), false, true);
+            String portExtension = "";
+            if (!(httpServletRequest.getLocalPort() == 443 && httpServletRequest.isSecure() || httpServletRequest.getLocalPort() == 80)) {
+                portExtension = ":" + httpServletRequest.getLocalPort();
             }
+            actionHandler.processAction(request, responseWriter, null, ImmutableSet.of(
+                httpServletRequest.getLocalAddr() + portExtension,
+                "localhost" + portExtension,
+                "127.0.0.1" + portExtension
+            ), false, true);
         } catch (IllegalArgumentException iae) {
             mockServerLogger.error(request, "exception processing: {} error: {}", request, iae.getMessage());
             // send request without API CORS headers
@@ -107,9 +118,10 @@ public class FlowMockServlet extends HttpServlet implements ServletContextListen
 
     /**
      * 刷新
+     *
      * @throws Exception
      */
-    @Scheduled(cron="0/30 * * * * ? ")
+    @Scheduled(cron = "0/30 * * * * ? ")
     @Override
     public void afterPropertiesSet() throws Exception {
         RedisExpectationInitializer.setProjectService(projectService);

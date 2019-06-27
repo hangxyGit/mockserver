@@ -1,4 +1,4 @@
-package com.treefinace.flowmock.flow;
+package com.treefinace.flowmock.flow.model;
 
 import com.google.common.collect.Maps;
 import com.treefinace.flowmock.model.ProjectModel;

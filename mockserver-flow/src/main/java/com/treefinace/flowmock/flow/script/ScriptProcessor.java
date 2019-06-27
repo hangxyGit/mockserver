@@ -1,6 +1,6 @@
 package com.treefinace.flowmock.flow.script;
 
-import com.treefinace.flowmock.flow.FlowHttpRequest;
+import com.treefinace.flowmock.flow.model.FlowHttpRequest;
 import com.treefinace.flowmock.model.ScriptConfigModel;
 
 public interface ScriptProcessor {

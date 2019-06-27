@@ -1,17 +1,18 @@
 package com.treefinace.flowmock.model;
 
-import com.treefinace.flowmock.flow.FlowExpectation;
+import com.alibaba.fastjson.annotation.JSONField;
+import com.treefinace.flowmock.flow.model.FlowExpectationDTO;
 import com.treefinace.flowmock.model.secret.AESKeyModel;
 import com.treefinace.flowmock.model.secret.DESKeyModel;
 import com.treefinace.flowmock.model.secret.RSAKeyModel;
 import com.treefinace.flowmock.model.secret.SHA256KeyModel;
-import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Map;
 
-@Data
-@Builder
+@Getter
+@Setter
 public class ProjectModel {
     private String projCode;
     private String projName;
@@ -24,9 +25,11 @@ public class ProjectModel {
     private Map<String, DESKeyModel> desKeys;
     private Map<String, SHA256KeyModel> sha256Keys;
     // 前置处理
-    private Map<String, ScriptConfigModel> preProccess;
+    private Map<String, ScriptConfigModel> preProcess;
     // 后置处理
-    private Map<String, ScriptConfigModel> postProccess;
+    private Map<String, ScriptConfigModel> postProcess;
 
-    private Map<String, FlowExpectation> flowExpectations;
+    @JSONField(serialize = false)
+    private Map<String, FlowExpectationDTO> flowExpectations;
+
 }

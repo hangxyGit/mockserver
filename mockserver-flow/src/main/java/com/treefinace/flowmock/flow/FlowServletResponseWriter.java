@@ -1,5 +1,7 @@
 package com.treefinace.flowmock.flow;
 
+import com.treefinace.flowmock.flow.model.FlowExpectation;
+import com.treefinace.flowmock.flow.model.FlowHttpRequest;
 import com.treefinace.flowmock.flow.script.ScriptProcessorManager;
 import com.treefinace.flowmock.model.ScriptConfigModel;
 import org.mockserver.model.HttpRequest;
@@ -26,9 +28,11 @@ public class FlowServletResponseWriter extends ServletResponseWriter {
             FlowHttpRequest flowHttpRequest = (FlowHttpRequest) request;
             // 前置处理
             FlowExpectation flowExpectation = flowHttpRequest.getFlowExpectation();
-            Map<String, ScriptConfigModel> scriptConfigsMap = flowExpectation.getPostProccess();
-            List<ScriptConfigModel> scriptConfigModelList = scriptConfigsMap.values().stream().sorted(Comparator.comparing(ScriptConfigModel::getScriptIndex)).collect(Collectors.toList());
-            scriptConfigModelList.stream().forEach(scriptConfigModel -> scriptProcessorManager.process(scriptConfigModel, flowHttpRequest));
+            if (flowExpectation != null && flowExpectation.getPostProcess() != null) {
+                Map<String, ScriptConfigModel> scriptConfigsMap = flowExpectation.getPostProcess();
+                List<ScriptConfigModel> scriptConfigModelList = scriptConfigsMap.values().stream().sorted(Comparator.comparing(ScriptConfigModel::getScriptIndex)).collect(Collectors.toList());
+                scriptConfigModelList.stream().forEach(scriptConfigModel -> scriptProcessorManager.process(scriptConfigModel, flowHttpRequest));
+            }
         }
         super.writeResponse(request, response, apiResponse);
     }

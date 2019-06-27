@@ -2,7 +2,7 @@ package com.treefinace.flowmock.flow.script.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.treefinace.flowmock.flow.CustomStringJavaCompiler;
-import com.treefinace.flowmock.flow.FlowHttpRequest;
+import com.treefinace.flowmock.flow.model.FlowHttpRequest;
 import com.treefinace.flowmock.flow.script.ScriptProcessor;
 import com.treefinace.flowmock.model.ScriptConfigModel;
 import com.wangyin.npp.util.Base64;
@@ -26,7 +26,7 @@ public class JavaScriptProcessor implements ScriptProcessor {
             javaSourceBf.append(scriptContent);
         } else {
             javaSourceBf.append("package com.treefinace.flowmock.flow.script.impl;\n")
-                .append("import com.treefinace.flowmock.flow.FlowHttpRequest;\n")
+                .append("import com.treefinace.flowmock.flow.model.FlowHttpRequest;\n")
                 .append("import " + JSON.class.getName() + ";\n")
                 .append("import " + Base64.class.getName() + ";\n")
                 .append("public class DynamicScript" + scriptContent.hashCode() + "{ \n")

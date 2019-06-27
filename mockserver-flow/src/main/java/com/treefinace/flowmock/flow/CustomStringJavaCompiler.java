@@ -75,19 +75,13 @@ public class CustomStringJavaCompiler {
      * @return 类的全名称
      */
     public static String getFullClassName(String sourceCode) {
-        String className = "";
-        Pattern pattern = Pattern.compile("package\\s+\\S+\\s*;");
-        Matcher matcher = pattern.matcher(sourceCode);
-        if (matcher.find()) {
-            className = matcher.group().replaceFirst("package", "").replace(";", "").trim() + ".";
-        }
+        String packagePath = sourceCode.substring(sourceCode.indexOf("package "));
+        packagePath = packagePath.substring(0, packagePath.indexOf(";"))
+            .replaceAll("package", "").replaceAll(";", "").trim();
 
-        pattern = Pattern.compile("class\\s+\\S+\\s+\\{");
-        matcher = pattern.matcher(sourceCode);
-        if (matcher.find()) {
-            className += matcher.group().replaceFirst("class", "").replace("{", "").trim();
-        }
-        return className;
+        String className = sourceCode.substring(sourceCode.indexOf("class "));
+        className = className.substring(0, className.indexOf("{")).replaceFirst("class", "").replace("{", "").trim();
+        return packagePath + "." + className;
     }
 
     /**
