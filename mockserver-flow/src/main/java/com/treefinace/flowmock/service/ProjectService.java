@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.treefinace.flowmock.flow.FlowMockRefresher;
 import com.treefinace.flowmock.model.ProjectModel;
 import com.treefinace.flowmock.utils.RedisKeyGenerator;
 import org.apache.commons.collections4.MapUtils;
@@ -31,6 +32,9 @@ public class ProjectService {
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
+
+    @Autowired
+    private FlowMockRefresher flowMockRefresher;
 
     public void update(ProjectModel project) {
         String projCode = project.getProjCode();
@@ -69,6 +73,8 @@ public class ProjectService {
                 }
             }
         }
+        // 强制重新刷新mock 配置
+        flowMockRefresher.refresh(projCode);
     }
 
     public ProjectModel getProject(String projectCode) {

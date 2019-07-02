@@ -77,6 +77,7 @@
         <module>mockserver-proxy-war</module>
         <module>mockserver-examples</module>
         <module>mockserver-flow</module>
+        <module>script-template</module>
     </modules>
 
     <dependencyManagement>

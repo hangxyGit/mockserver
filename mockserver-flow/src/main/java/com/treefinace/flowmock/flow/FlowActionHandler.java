@@ -4,9 +4,11 @@ import com.treefinace.flowmock.flow.model.FlowExpectation;
 import com.treefinace.flowmock.flow.model.FlowExpectationDTO;
 import com.treefinace.flowmock.flow.model.FlowHttpRequest;
 import com.treefinace.flowmock.flow.script.ScriptProcessorManager;
+import com.treefinace.flowmock.model.HandleType;
 import com.treefinace.flowmock.model.ScriptConfigModel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.EventLoopGroup;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.mockserver.mock.Expectation;
 import org.mockserver.mock.action.ActionHandler;
@@ -40,10 +42,20 @@ public class FlowActionHandler extends ActionHandler {
             // 前置处理
             FlowExpectation flowExpectation = (FlowExpectation) expectation;
             flowHttpRequest.setFlowExpectation(flowExpectation);
+
             Map<String, ScriptConfigModel> scriptConfigsMap = flowExpectation.getPreProcess();
             if (MapUtils.isNotEmpty(scriptConfigsMap)) {
-                List<ScriptConfigModel> scriptConfigModelList = scriptConfigsMap.values().stream().sorted(Comparator.comparing(ScriptConfigModel::getScriptIndex)).collect(Collectors.toList());
-                scriptConfigModelList.stream().forEach(scriptConfigModel -> scriptProcessorManager.process(scriptConfigModel, flowHttpRequest));
+                List<ScriptConfigModel> scriptConfigModelList = scriptConfigsMap
+                    .values()
+                    .stream()
+//                    .filter(scriptConfigModel -> HandleType.pre.equals(scriptConfigModel.getHandleType()))
+                    .sorted(Comparator.comparing(ScriptConfigModel::getScriptIndex))
+                    .collect(Collectors.toList());
+
+                if (CollectionUtils.isNotEmpty(scriptConfigModelList)) {
+                    scriptConfigModelList.stream()
+                        .forEach(scriptConfigModel -> scriptProcessorManager.process(scriptConfigModel, flowHttpRequest, null));
+                }
             }
         }
         super.processAction(request, responseWriter, ctx, localAddresses, proxyingRequest, synchronous);

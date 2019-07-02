@@ -6,6 +6,8 @@ import org.mockserver.mappers.ContentTypeMapper;
 import org.mockserver.model.StringBody;
 import org.mockserver.serialization.ObjectMapperFactory;
 import org.mockserver.streams.IOStreamUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,7 +17,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.HashMap;
 
 import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
 import static org.mockserver.mappers.ContentTypeMapper.DEFAULT_HTTP_CHARACTER_SET;
@@ -23,6 +24,7 @@ import static org.mockserver.mappers.ContentTypeMapper.DEFAULT_HTTP_CHARACTER_SE
 @Controller
 @RequestMapping("/project")
 public class ProjectController {
+    Logger logger = LoggerFactory.getLogger(getClass());
     @Autowired
     ProjectService projectService;
 
@@ -37,6 +39,15 @@ public class ProjectController {
         String jsonString = stringBody.toString();
         ProjectModel projectModel = ObjectMapperFactory.createObjectMapper().readValue(jsonString, ProjectModel.class);
         projectService.update(projectModel);
-        return new HashMap<>();
+        logger.info("更新项目配置成功过.....");
+        return projectService.getProject(projectModel.getProjCode());
     }
+
+
+    @RequestMapping(value = "/get")
+    @ResponseBody
+    public Object get(String projCode) {
+        return projectService.getProject(projCode);
+    }
+
 }

@@ -16,7 +16,6 @@ import org.mockserver.responsewriter.ResponseWriter;
 import org.mockserver.scheduler.Scheduler;
 import org.mockserver.serialization.PortBindingSerializer;
 import org.mockserver.socket.tls.KeyAndCertificateFactory;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -36,7 +35,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mockserver.model.HttpResponse.response;
 
 @Component
-public class FlowMockServlet extends DispatcherServlet implements ServletContextListener, InitializingBean {
+public class FlowMockServlet extends DispatcherServlet implements ServletContextListener, FlowMockRefresher {
 
     private MockServerLogger mockServerLogger;
     // generic handling
@@ -68,14 +67,14 @@ public class FlowMockServlet extends DispatcherServlet implements ServletContext
     @Override
     public void service(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws ServletException, IOException {
 
-        ResponseWriter responseWriter = new FlowServletResponseWriter(scriptProcessorManager, httpServletResponse);
+        ResponseWriter responseWriter = new FlowServletResponseWriter(scriptProcessorManager, httpServletRequest, httpServletResponse);
         FlowHttpRequest request = null;
         try {
 
             // 接受mock 配置的后台端口，转至Controller处理
             if (httpServletRequest.getServerPort() == serverPort) {
                 if (httpServletRequest.getPathInfo().startsWith(HttpStateHandler.PATH_PREFIX)) {
-                    request = new FlowHttpRequest(requestDecoder.mapHttpServletRequestToMockServerRequest(httpServletRequest));
+                    request = new FlowHttpRequest(requestDecoder.mapHttpServletRequestToMockServerRequest(httpServletRequest), httpServletRequest);
                     httpStateHandler.handle(request, responseWriter, false);
                 } else {
                     super.service(httpServletRequest, httpServletResponse);
@@ -83,7 +82,7 @@ public class FlowMockServlet extends DispatcherServlet implements ServletContext
                 return;
             }
 
-            request = new FlowHttpRequest(requestDecoder.mapHttpServletRequestToMockServerRequest(httpServletRequest));
+            request = new FlowHttpRequest(requestDecoder.mapHttpServletRequestToMockServerRequest(httpServletRequest), httpServletRequest);
             // 项目信息
             String project = request.getPrimaryPath().replaceAll("/", "");
             // 获取redis 配置
@@ -116,19 +115,29 @@ public class FlowMockServlet extends DispatcherServlet implements ServletContext
         }
     }
 
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        RedisExpectationInitializer.setProjectService(projectService);
+        refreshAll();
+    }
+
+
     /**
      * 刷新
      *
      * @throws Exception
      */
-    @Scheduled(cron = "0/30 * * * * ? ")
+    @Scheduled(cron = "0/60 * * * * ? ")
     @Override
-    public void afterPropertiesSet() throws Exception {
-        RedisExpectationInitializer.setProjectService(projectService);
+        public void refreshAll() {
         this.httpStateHandler = new FlowHttpStateHandler(scheduler);
         this.mockServerLogger = httpStateHandler.getMockServerLogger();
         this.portBindingSerializer = new PortBindingSerializer(mockServerLogger);
         this.actionHandler = new FlowActionHandler(scriptProcessorManager, workerGroup, httpStateHandler, null);
     }
 
+    @Override
+    public void refresh(String projectCode) {
+        refreshAll();
+    }
 }
