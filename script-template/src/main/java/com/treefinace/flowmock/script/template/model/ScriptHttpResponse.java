@@ -19,6 +19,7 @@ public class ScriptHttpResponse extends HttpResponse {
         this.origin = origin;
     }
 
+
     public HttpServletResponse getOrigin() {
         return origin;
     }

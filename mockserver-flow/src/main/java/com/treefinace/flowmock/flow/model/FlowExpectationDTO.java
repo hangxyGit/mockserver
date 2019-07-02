@@ -1,10 +1,13 @@
 package com.treefinace.flowmock.flow.model;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.treefinace.flowmock.model.ScriptConfigModel;
+import com.treefinace.flowmock.script.template.model.ThirdPartyCallback;
 import org.mockserver.mock.Expectation;
 import org.mockserver.serialization.model.ExpectationDTO;
 
+import java.util.List;
 import java.util.Map;
 
 public class FlowExpectationDTO extends ExpectationDTO {
@@ -14,6 +17,8 @@ public class FlowExpectationDTO extends ExpectationDTO {
     private Map<String, ScriptConfigModel> preProcess;
     // 后置处理
     private Map<String, ScriptConfigModel> postProcess;
+
+    private List<ThirdPartyCallback> thirdPartyCallbacks;
 
     public FlowExpectationDTO(Expectation expectation) {
         super(expectation);
@@ -44,6 +49,9 @@ public class FlowExpectationDTO extends ExpectationDTO {
         if (this.postProcess != null) {
             flowExpectation.setPostProcess(Maps.newHashMap(this.postProcess));
         }
+        if (this.thirdPartyCallbacks != null) {
+            flowExpectation.setThirdPartyCallbacks(Lists.newArrayList(this.thirdPartyCallbacks));
+        }
         return flowExpectation;
     }
 
@@ -67,4 +75,11 @@ public class FlowExpectationDTO extends ExpectationDTO {
         this.expectationCode = expectationCode;
     }
 
+    public List<ThirdPartyCallback> getThirdPartyCallbacks() {
+        return thirdPartyCallbacks;
+    }
+
+    public void setThirdPartyCallbacks(List<ThirdPartyCallback> thirdPartyCallbacks) {
+        this.thirdPartyCallbacks = thirdPartyCallbacks;
+    }
 }

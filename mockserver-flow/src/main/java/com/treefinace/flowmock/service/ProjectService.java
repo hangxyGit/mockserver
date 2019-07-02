@@ -7,6 +7,7 @@ import com.google.common.collect.Maps;
 import com.treefinace.flowmock.flow.FlowMockRefresher;
 import com.treefinace.flowmock.model.ProjectModel;
 import com.treefinace.flowmock.utils.RedisKeyGenerator;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mockserver.serialization.ObjectMapperFactory;
@@ -60,8 +61,9 @@ public class ProjectService {
         // map property 写入hash
         PropertyDescriptor[] propertyDescriptors = BeanUtils.getPropertyDescriptors(ProjectModel.class);
         for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
-            if (propertyDescriptor.getPropertyType().isAssignableFrom(Map.class)) {
-                try {
+            try {
+                // map
+                if (propertyDescriptor.getPropertyType().isAssignableFrom(Map.class)) {
                     Map<?, ?> map = (Map<?, ?>) propertyDescriptor.getReadMethod().invoke(project);
                     if (MapUtils.isEmpty(map)) {
                         continue;
@@ -69,9 +71,20 @@ public class ProjectService {
                     String propertyRedisKey = RedisKeyGenerator.get("project", projCode, propertyDescriptor.getDisplayName());
                     Map<String, String> propertyStringMap = toJSONStringMap(map);
                     stringRedisTemplate.opsForHash().putAll(propertyRedisKey, propertyStringMap);
-                } catch (Exception e) {
                 }
+                // list
+                else if (propertyDescriptor.getPropertyType().isAssignableFrom(List.class)) {
+                    String propertyRedisKey = RedisKeyGenerator.get("project", projCode, propertyDescriptor.getDisplayName());
+                    List<?> list = (List<?>) propertyDescriptor.getReadMethod().invoke(project);
+                    if (CollectionUtils.isNotEmpty(list)) {
+                        stringRedisTemplate.opsForValue().set(propertyRedisKey, JSON.toJSONString(list));
+                    } else {
+                        stringRedisTemplate.delete(propertyRedisKey);
+                    }
+                }
+            } catch (Exception e) {
             }
+
         }
         // 强制重新刷新mock 配置
         flowMockRefresher.refresh(projCode);
@@ -90,8 +103,8 @@ public class ProjectService {
         // map property 写入hash
         PropertyDescriptor[] propertyDescriptors = BeanUtils.getPropertyDescriptors(ProjectModel.class);
         for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
-            if (propertyDescriptor.getPropertyType().isAssignableFrom(Map.class)) {
-                try {
+            try {
+                if (propertyDescriptor.getPropertyType().isAssignableFrom(Map.class)) {
                     String property = propertyDescriptor.getDisplayName();
                     String propertyRedisKey = RedisKeyGenerator.get("project", projectCode, propertyDescriptor.getDisplayName());
                     Map<String, String> propertyStringMap = hashOperations.entries(propertyRedisKey);
@@ -106,9 +119,24 @@ public class ProjectService {
                         continue;
                     }
                     propertyDescriptor.getWriteMethod().invoke(project, propertyMap);
-                } catch (Exception e) {
-                    e.printStackTrace();
                 }
+                // list
+                else if (propertyDescriptor.getPropertyType().isAssignableFrom(List.class)) {
+                    String property = propertyDescriptor.getDisplayName();
+                    String propertyRedisKey = RedisKeyGenerator.get("project", projectCode, propertyDescriptor.getDisplayName());
+                    String json = stringRedisTemplate.opsForValue().get(propertyRedisKey);
+
+                    Type type = ProjectModel.class.getDeclaredField(property).getGenericType();
+                    Class<?> clazz = null;
+                    if (ParameterizedType.class.isAssignableFrom(type.getClass())) {
+                        ParameterizedType parameterizedType = (ParameterizedType) type;
+                        clazz = (Class<?>) parameterizedType.getActualTypeArguments()[1];
+                    }
+                    List<?> list = JSON.parseArray(json, clazz);
+                    propertyDescriptor.getWriteMethod().invoke(project, list);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
         return project;

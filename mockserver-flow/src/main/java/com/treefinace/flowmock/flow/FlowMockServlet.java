@@ -129,9 +129,9 @@ public class FlowMockServlet extends DispatcherServlet implements ServletContext
      */
     @Scheduled(cron = "0/60 * * * * ? ")
     @Override
-        public void refreshAll() {
+    public void refreshAll() {
         this.httpStateHandler = new FlowHttpStateHandler(scheduler);
-        this.mockServerLogger = httpStateHandler.getMockServerLogger();
+        this.mockServerLogger = new MockServerLogger(getClass());
         this.portBindingSerializer = new PortBindingSerializer(mockServerLogger);
         this.actionHandler = new FlowActionHandler(scriptProcessorManager, workerGroup, httpStateHandler, null);
     }
