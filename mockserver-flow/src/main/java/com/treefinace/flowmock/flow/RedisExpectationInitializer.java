@@ -68,7 +68,8 @@ public class RedisExpectationInitializer implements ExpectationInitializer {
                             }
                         }
                     }
-                    if (MapUtils.isNotEmpty(flowExpectationMap)){
+                    if (MapUtils.isNotEmpty(flowExpectationMap)) {
+                        flowExpectationMap.values().forEach(flowExpectationDTO -> flowExpectationDTO.setProjCode(project));
                         flowExpectations.addAll(flowExpectationMap.values());
                     }
                 }

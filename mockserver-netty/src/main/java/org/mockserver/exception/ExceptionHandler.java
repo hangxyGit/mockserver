@@ -70,7 +70,7 @@ public class ExceptionHandler {
             try {
                 // No match by now.. Try to load the class via classloader and inspect it.
                 // This is mainly done as other JDK implementations may differ in name of
-                // the impl.
+                // the java.
                 Class<?> clazz = PlatformDependent.getClassLoader(ExceptionHandler.class).loadClass(classname);
 
                 if (SocketChannel.class.isAssignableFrom(clazz)

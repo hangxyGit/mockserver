@@ -2,7 +2,7 @@ package com.treefinace.flowmock.flow.script;
 
 import com.treefinace.flowmock.flow.model.FlowHttpRequest;
 import com.treefinace.flowmock.flow.model.FlowHttpResponse;
-import com.treefinace.flowmock.flow.script.impl.JavaScriptProcessor;
+import com.treefinace.flowmock.flow.script.java.JavaScriptProcessor;
 import com.treefinace.flowmock.model.ScriptConfigModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

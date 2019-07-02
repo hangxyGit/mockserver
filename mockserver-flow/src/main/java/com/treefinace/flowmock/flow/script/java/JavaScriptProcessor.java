@@ -1,4 +1,4 @@
-package com.treefinace.flowmock.flow.script.impl;
+package com.treefinace.flowmock.flow.script.java;
 
 import com.alibaba.fastjson.JSON;
 import com.treefinace.flowmock.flow.DynamicJavaCompiler;
@@ -30,7 +30,7 @@ public class JavaScriptProcessor implements ScriptProcessor {
             javaSourceBf.append(scriptContent);
         } else {
             String haseCode = (scriptContent.hashCode() > 0 ? scriptContent.hashCode() + "" : "F" + Math.abs(scriptContent.hashCode()));
-            javaSourceBf.append("package com.treefinace.flowmock.flow.script.impl;\n")
+            javaSourceBf.append("package com.treefinace.flowmock.flow.script.java;\n")
                 .append("import com.treefinace.flowmock.flow.model.FlowHttpRequest;\n")
                 .append("import com.treefinace.flowmock.flow.model.FlowHttpResponse;\n")
                 .append("import com.google.common.collect.*;\n\n")
